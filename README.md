@@ -2,6 +2,7 @@
 Written in Javascript, thanks to Mineflayer.
 
 Required:
+
 node.js v19+ hopefully
 ```
 npm install mineflayer
