@@ -13,6 +13,7 @@ const bot = mineflayer.createBot({
   loadInternalPlugins: true,
   logErrors: false
 })
+let whitelist = ['Hyperlatrix']
 bot.loadPlugin(pvp);
 bot.loadPlugin(armorManager);
 bot.loadPlugin(pathfinder);
@@ -127,7 +128,7 @@ bot.on('chat',(username, message) => {
         }
     }
 })
-//PvP Section
+//PvP & PvE Section
 bot.on('playerCollect', (collector, itemDrop) => {
     if (collector !== bot.entity) return
 
@@ -148,31 +149,31 @@ bot.on('playerCollect', (collector, itemDrop) => {
   
 // PvE Section
 let guardPos = null
-  
-function guardArea (pos) {
-    guardPos = pos.clone()
-  
-    if (!bot.pvp.target) {
-      moveToGuardPos()
-    }
-}
-  
-function stopGuarding () {
-    guardPos = null
-    bot.pvp.stop()
-    bot.pathfinder.setGoal(null)
-}
-  
+
 function moveToGuardPos () {
     const mcData = require('minecraft-data')(bot.version)
     console.log(guardPos);
     bot.pathfinder.setMovements(new Movements(bot, mcData))
     bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z))
 }
+
+function guardArea(pos) {
+    guardPos = pos.clone();
+  
+    if (!bot.pvp.target) {
+      moveToGuardPos();
+    }
+}
+  
+function stopGuarding () {
+    guardPos = null
+    bot.pvp.stop();
+    bot.pathfinder.setGoal(null);
+}
   
 bot.on('stoppedAttacking', () => {
     if (guardPos) {
-      moveToGuardPos()
+      moveToGuardPos();
     }
 })
   
@@ -195,23 +196,15 @@ bot.on('physicsTick', () => {
       bot.pvp.attack(entity)
     }
 })
-  
+bot.on('chat', function(username, message) {
+    if(message !== "h.guard") return;
+    if(!whitelist.includes(username)) return;
+    let player = bot.players[username]?.entity;
+    if(!player) return bot.chat("I can't see you");
+    bot.chat(`I will guard at that location`);
+    guardArea(player.position)
+  })
 bot.on('chat', (username, message) => {
-    if(username === "Hyperlatrix"){
-        if (message === 'h.guard') {
-            const player = bot.players[username]
-  
-            if (!player) {
-                bot.chat("I can't see you.");
-                return
-            }
-            else{
-                bot.chat('I will guard that location.')
-                guardArea(player.entity?.position)
-                console.log(player.entity)
-            }
-        }
-  
         if (message.startsWith('h.killplayer')) {
             const playerName = message.substring(13);
             const player = bot.players[playerName];
@@ -232,8 +225,7 @@ bot.on('chat', (username, message) => {
             bot.chat('I will no longer guard this area.')
             stopGuarding()
         }
-    }
-  })
+    })
 // Collect (not done)
 bot.on('chat', async (username, message) => {
     if(username === "Hyperlatrix"){
